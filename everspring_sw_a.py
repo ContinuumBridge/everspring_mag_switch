@@ -24,9 +24,7 @@ class Adaptor(CbAdaptor):
         logging.basicConfig(filename=CB_LOGFILE,level=CB_LOGGING_LEVEL,format='%(asctime)s %(message)s')
         self.status =           "ok"
         self.state =            "stopped"
-        self.apps =             {"binary_sensor": [],
-                                 "temperature": [],
-                                 "luminance": []}
+        self.apps =             {"binary_sensor": []}
         # super's __init__ must be called:
         #super(Adaptor, self).__init__(argv)
         CbAdaptor.__init__(self, argv)
@@ -64,39 +62,23 @@ class Adaptor(CbAdaptor):
         self.sendZwaveMessage(cmd)
         reactor.callLater(BATTERY_CHECK_INTERVAL, self.checkBattery)
 
-    def pollSensors(self):
-        cmd = {"id": self.id,
-               "request": "post",
-               "address": self.addr,
-               "instance": "0",
-               "commandClass": "156",
-               "action": "Get",
-               "value": ""
-              }
-        self.sendZwaveMessage(cmd)
-        reactor.callLater(SENSOR_POLL_INTERVAL, self.pollSensors)
-
-    def sendAlarm(self, alarmState):
-        if alarmState:
-            b = "on"
-        else:
-            b = "off"
-        logging.debug("%s %s sendAlarm, alarm: %s", ModuleName, self.id, b)
-        self.sendCharacteristic("binary_sensor", b, time.time())
+    def onOff(self, boolean):
+        if boolean:
+            return "on"
+        elif not boolean:
+            return "off"
 
     def onZwaveMessage(self, message):
-        logging.debug("%s %s onZwaveMessage, message: %s", ModuleName, self.id, str(message))
+        #logging.debug("%s %s onZwaveMessage, message: %s", ModuleName, self.id, str(message))
         if message["content"] == "init":
             cmd = {"id": self.id,
                    "request": "get",
                    "address": self.addr,
                    "instance": "0",
-                   "commandClass": "156",
-                   "value": "1",
-                   "name": "sensorState"
+                   "commandClass": "48",
+                   "value": "1"
                   }
             self.sendZwaveMessage(cmd)
-            # Battery
             cmd = {"id": self.id,
                    "request": "get",
                    "address": self.addr,
@@ -104,29 +86,14 @@ class Adaptor(CbAdaptor):
                    "commandClass": "128"
                   }
             self.sendZwaveMessage(cmd)
-            # Associate PIR alarm with this controller
-            cmd = {"id": self.id,
-                   "request": "post",
-                   "address": self.addr,
-                   "instance": "0",
-                   "commandClass": "133",
-                   "action": "Set",
-                   "value": "1,1"
-                  }
-            self.sendZwaveMessage(cmd)
-            reactor.callLater(20, self.checkBattery)
-            reactor.callLater(30, self.pollSensors)
+            reactor.callLater(10, self.checkBattery)
         elif message["content"] == "data":
             try:
-                if message["commandClass"] == "156":
-                    if message["data"]["name"] == "1":
-                        alarmState = message["data"]["sensorState"]["value"] 
-                        self.sendAlarm(alarmState)
-                    elif message["data"]["name"] == "sensorState":
-                        alarmState = message["data"]["value"] 
-                        self.sendAlarm(alarmState)
+                if message["commandClass"] == "48":
+                    level = message["data"]["level"]["value"]
+                    logging.debug("%s %s onZwaveMessage, level: %s", ModuleName, self.id, level)
+                    self.sendCharacteristic("binary_sensor", self.onOff(level), time.time())
                 elif message["commandClass"] == "128":
-                     #logging.debug("%s %s onZwaveMessage, battery message: %s", ModuleName, self.id, str(message))
                      battery = message["data"]["last"]["value"] 
                      logging.info("%s %s battery level: %s", ModuleName, self.id, battery)
                      msg = {"id": self.id,
@@ -134,7 +101,7 @@ class Adaptor(CbAdaptor):
                             "battery_level": battery}
                      self.sendManagerMessage(msg)
             except:
-                logging.warning("%s %s onZwaveMessage, unexpected message", ModuleName, str(message))
+                logging.debug("%s %s onZwaveMessage, no level", ModuleName, self.id)
 
     def onAppInit(self, message):
         logging.debug("%s %s %s onAppInit, req = %s", ModuleName, self.id, self.friendly_name, message)
