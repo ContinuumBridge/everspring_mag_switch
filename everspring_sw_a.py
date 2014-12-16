@@ -6,8 +6,7 @@
 # Written by Peter Claydon
 #
 ModuleName               = "everspring_sw"
-BATTERY_CHECK_INTERVAL   = 600      # How often to check battery (secs)
-SENSOR_POLL_INTERVAL     = 300      # How often to request sensor values
+BATTERY_CHECK_INTERVAL   = 43200     # How often to check battery (secs)
 
 import sys
 import time
