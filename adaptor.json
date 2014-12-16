@@ -1,11 +1,11 @@
 {
-    "name": "Everspring 1 2",
-    "url": "https://github.com/ContinuumBridge/everspring-smoke-alarm/archive/v1.0.0.tar.gz",
-    "exe": "everspring_sw.py",
-    "description": "Everspring Magnetic Switch",
-    "protocol": "zwave",
-    "provider": "ContinuumBridge",
+    "exe": "everspring_sw.py", 
+    "protocol": "zwave", 
+    "name": "Everspring 1 2", 
     "device_resource": "/api/bridge/v1/device/10/", 
+    "url": "https://github.com/ContinuumBridge/everspring-smoke-alarm/archive/v1.0.0.tar.gz", 
+    "version": "1.0.0", 
+    "provider": "ContinuumBridge", 
     "adaptor_resource": "/api/bridge/v1/adaptor/8/", 
-    "version": "1.0.0"
+    "description": "Everspring Magnetic Switch"
 }
