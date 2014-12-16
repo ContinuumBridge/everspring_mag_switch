@@ -23,7 +23,8 @@ class Adaptor(CbAdaptor):
         logging.basicConfig(filename=CB_LOGFILE,level=CB_LOGGING_LEVEL,format='%(asctime)s %(message)s')
         self.status =           "ok"
         self.state =            "stopped"
-        self.apps =             {"binary_sensor": []}
+        self.apps =             {"binary_sensor": [],
+                                 "battery": []}
         # super's __init__ must be called:
         #super(Adaptor, self).__init__(argv)
         CbAdaptor.__init__(self, argv)
@@ -85,7 +86,7 @@ class Adaptor(CbAdaptor):
                    "commandClass": "128"
                   }
             self.sendZwaveMessage(cmd)
-            reactor.callLater(10, self.checkBattery)
+            reactor.callLater(100, self.checkBattery)
         elif message["content"] == "data":
             try:
                 if message["commandClass"] == "48":
@@ -99,6 +100,7 @@ class Adaptor(CbAdaptor):
                             "status": "battery_level",
                             "battery_level": battery}
                      self.sendManagerMessage(msg)
+                     self.sendCharacteristic("battery", battery, time.time())
             except:
                 logging.debug("%s %s onZwaveMessage, no level", ModuleName, self.id)
 
@@ -107,7 +109,8 @@ class Adaptor(CbAdaptor):
         resp = {"name": self.name,
                 "id": self.id,
                 "status": "ok",
-                "service": [{"characteristic": "binary_sensor", "interval": 0}],
+                "service": [{"characteristic": "binary_sensor", "interval": 0},
+                            {"characteristic": "battery", "interval": 600}],
                 "content": "service"}
         self.sendMessage(resp, message["id"])
         self.setState("running")
