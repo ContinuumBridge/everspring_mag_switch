@@ -2,10 +2,10 @@
     "exe": "everspring_sw.py", 
     "protocol": "zwave", 
     "name": "Everspring 1 2", 
-    "device_resource": "/api/bridge/v1/device/12/", 
-    "url": "https://github.com/ContinuumBridge/everspring_mag_switch/archive/v1.0.2.tar.gz", 
-    "version": "1.0.2", 
+    "device_resource": "/api/bridge/v1/device/12", 
+    "url": "https://github.com/ContinuumBridge/everspring_mag_switch/archive/v1.0.3.tar.gz", 
+    "version": "1.0.3", 
     "provider": "ContinuumBridge", 
-    "adaptor_resource": "/api/bridge/v1/adaptor/10/", 
+    "adaptor_resource": "/api/bridge/v1/adaptor/10", 
     "description": "Everspring Magnetic Switch"
 }
