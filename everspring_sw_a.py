@@ -7,6 +7,7 @@
 #
 ModuleName               = "everspring_sw"
 BATTERY_CHECK_INTERVAL   = 7200     # How often to check battery (secs)
+TIME_CUTOFF              = 43200    # 12 hours. Data older than this is considered "stale"
 
 import sys
 import time
@@ -23,6 +24,8 @@ class Adaptor(CbAdaptor):
         self.state =            "stopped"
         self.apps =             {"binary_sensor": [],
                                  "battery": []}
+        self.lastBinaryTime =   0
+        self.lastBatteryTime =  0
         # super's __init__ must be called:
         #super(Adaptor, self).__init__(argv)
         CbAdaptor.__init__(self, argv)
@@ -87,17 +90,23 @@ class Adaptor(CbAdaptor):
         elif message["content"] == "data":
             try:
                 if message["commandClass"] == "48":
-                    level = message["data"]["level"]["value"]
-                    self.cbLog("debug", "onZwaveMessage, level: " + str(level))
-                    self.sendCharacteristic("binary_sensor", self.onOff(level), time.time())
+                    updateTime = message["data"]["level"]["updateTime"] 
+                    if updateTime != self.lastBinaryTime and time.time() - updateTime < TIME_CUTOFF:
+                        level = message["data"]["level"]["value"]
+                        self.cbLog("debug", "onZwaveMessage, level: " + str(level))
+                        self.sendCharacteristic("binary_sensor", self.onOff(level), time.time())
+                        self.lastBinaryTime = updateTime
                 elif message["commandClass"] == "128":
-                    battery = message["data"]["last"]["value"] 
-                    self.cbLog("debug", "battery level: " + str(battery))
-                    msg = {"id": self.id,
-                           "status": "battery_level",
-                           "battery_level": battery}
-                    self.sendManagerMessage(msg)
-                    self.sendCharacteristic("battery", battery, time.time())
+                    updateTime = message["data"]["last"]["updateTime"]
+                    if (updateTime != self.lastBatteryTime) and (time.time() - updateTime < TIME_CUTOFF):
+                        battery = message["data"]["last"]["value"] 
+                        self.cbLog("debug", "battery level: " + str(battery))
+                        msg = {"id": self.id,
+                               "status": "battery_level",
+                               "battery_level": battery}
+                        self.sendManagerMessage(msg)
+                        self.sendCharacteristic("battery", battery, time.time())
+                        self.lastBatteryTime = updateTime
             except:
                 self.cbLog("debug", "onZwaveMessage, no level")
 
